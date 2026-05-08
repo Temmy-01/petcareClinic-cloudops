@@ -3,7 +3,6 @@
 **Author:** Kubernetes Engineer  
 **Cluster:** AWS EKS (`petclinic-eks-prod`, `us-east-1`)  
 **Date:** May 8, 2026
-
 ---
 
 ## Overview
