@@ -90,5 +90,5 @@ See [Deployment Guide](deployment.md) for complete setup instructions.
 
 
 ----
-This part will be for our architecture
+This part will be for our architecture diagram
 ----
