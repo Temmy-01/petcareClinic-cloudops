@@ -18,6 +18,8 @@ data:
 
       - job_name: api-gateway
         metrics_path: /actuator/prometheus
+        scrape_timeout: 30s
+        scrape_interval: 30s
         static_configs:
           - targets: ['api-gateway:8090']
 
