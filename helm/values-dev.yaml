@@ -39,8 +39,6 @@ genai-service:
     type: ClusterIP
     port: 8084
   env:
-    - name: SPRING_MAIN_WEB_APPLICATION_TYPE
-      value: "servlet"
     - name: SPRING_AI_AZURE_OPENAI_ENDPOINT
       valueFrom:
         secretKeyRef:
