@@ -19,7 +19,7 @@ data:
       - job_name: api-gateway
         metrics_path: /actuator/prometheus
         static_configs:
-          - targets: ['api-gateway:8080']
+          - targets: ['api-gateway:8090']
 
       - job_name: customers-service
         metrics_path: /actuator/prometheus
