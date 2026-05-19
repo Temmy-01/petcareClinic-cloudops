@@ -36,3 +36,83 @@ jobs:
         name: build-artifacts
         path: 'upstream/**/target/*.jar'
         retention-days: 1
+
+  trivy-scan:
+    name: Trivy Security Scan
+    runs-on: ubuntu-latest
+    needs: build
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Trivy — scan dependencies for CVEs
+      uses: aquasecurity/trivy-action@master
+      with:
+        scan-type: fs
+        scan-ref: upstream/
+        format: table
+        exit-code: '0'
+        severity: CRITICAL,HIGH
+        ignore-unfixed: true
+
+    - name: Trivy — scan Helm charts for misconfigurations
+      uses: aquasecurity/trivy-action@master
+      with:
+        scan-type: config
+        scan-ref: helm/
+        format: table
+        exit-code: '0'
+        severity: CRITICAL,HIGH
+
+    - name: Trivy — scan Terraform for misconfigurations
+      uses: aquasecurity/trivy-action@master
+      with:
+        scan-type: config
+        scan-ref: terraform/
+        format: table
+        exit-code: '0'
+        severity: CRITICAL,HIGH
+
+    - name: Upload Trivy SARIF report
+      uses: aquasecurity/trivy-action@master
+      with:
+        scan-type: fs
+        scan-ref: upstream/
+        format: sarif
+        output: trivy-results.sarif
+        exit-code: '0'
+        severity: CRITICAL,HIGH
+        ignore-unfixed: true
+
+    - name: Upload Trivy results to GitHub Security tab
+      uses: github/codeql-action/upload-sarif@v3
+      if: always()
+      with:
+        sarif_file: trivy-results.sarif
+
+  checkov-scan:
+    name: Checkov IaC Scan
+    runs-on: ubuntu-latest
+    needs: build
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Checkov — scan Terraform
+      uses: bridgecrewio/checkov-action@master
+      with:
+        directory: terraform/
+        framework: terraform
+        soft_fail: true
+        output_format: cli
+        download_external_modules: false
+
+    - name: Checkov — scan Helm / Kubernetes
+      uses: bridgecrewio/checkov-action@master
+      with:
+        directory: helm/
+        framework: helm
+        soft_fail: true
+        output_format: cli
