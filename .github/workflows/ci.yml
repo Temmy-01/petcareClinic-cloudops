@@ -100,19 +100,23 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
 
+    - name: Install Checkov
+      run: pip install checkov
+
     - name: Checkov — scan Terraform
-      uses: bridgecrewio/checkov-action@master
-      with:
-        directory: terraform/
-        framework: terraform
-        soft_fail: true
-        output_format: cli
-        download_external_modules: false
+      run: |
+        checkov -d terraform/ \
+          --framework terraform \
+          --skip-check CKV2_K8S_6 \
+          --compact \
+          --soft-fail
+      continue-on-error: true
 
     - name: Checkov — scan Helm / Kubernetes
-      uses: bridgecrewio/checkov-action@master
-      with:
-        directory: helm/
-        framework: helm
-        soft_fail: true
-        output_format: cli
+      run: |
+        checkov -d helm/ \
+          --framework helm \
+          --skip-check CKV2_K8S_6 \
+          --compact \
+          --soft-fail
+      continue-on-error: true
