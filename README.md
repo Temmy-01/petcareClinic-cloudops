@@ -61,7 +61,7 @@
 
 **PetCare Clinic CloudOps** is the capstone project of the DevOps Micro Internship (DMI) programme, cohort 2026. The project takes the well-known open-source [Spring PetClinic Microservices](https://github.com/spring-petclinic/spring-petclinic-microservices) application and deploys it as a real, production-grade system using modern DevOps practices.
 
-This is not a demo environment. Every tool, every pipeline, every configuration in this repository reflects how a real engineering team operates.
+This is not a demo environment. Every tool, every pipeline, and every configuration in this repository reflects how a real engineering team operates.
 
 ### What We Built
 
