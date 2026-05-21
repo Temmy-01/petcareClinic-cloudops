@@ -65,7 +65,7 @@ This is not a demo environment. Every tool, every pipeline, every configuration 
 
 ### What We Built
 
-A team of 11 DevOps interns built and delivered:
+A team of 11 DevOps interns built and delivered this:
 
 | Layer | What We Delivered |
 |-------|------------------|
