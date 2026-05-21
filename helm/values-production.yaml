@@ -1,6 +1,6 @@
 global:
   imageRegistry: "268015775379.dkr.ecr.us-east-1.amazonaws.com"
-  imageTag: "v1.0.30"
+  imageTag: "v1.0.32"
   namespace: production
   springProfile: docker
   configServerUrl: "http://config-server:8888"
