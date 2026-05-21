@@ -26,6 +26,14 @@ spec:
           env:
             - name: GF_SERVER_HTTP_PORT
               value: "3000"
+            - name: GF_PATHS_PROVISIONING
+              value: /etc/grafana/provisioning
+            - name: GF_AUTH_ANONYMOUS_ENABLED
+              value: "true"
+            - name: GF_AUTH_ANONYMOUS_ORG_ROLE
+              value: "Admin"
+            - name: GF_SECURITY_ADMIN_PASSWORD
+              value: {{ .Values.adminPassword | quote }}
           readinessProbe:
             httpGet:
               path: /api/health
@@ -42,3 +50,19 @@ spec:
             failureThreshold: 5
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
+          volumeMounts:
+            - name: provisioning
+              mountPath: /etc/grafana/provisioning/datasources/all.yml
+              subPath: datasources.yml
+            - name: provisioning
+              mountPath: /etc/grafana/provisioning/dashboards/all.yml
+              subPath: dashboards.yml
+            - name: dashboards
+              mountPath: /var/lib/grafana/dashboards
+      volumes:
+        - name: provisioning
+          configMap:
+            name: grafana-provisioning
+        - name: dashboards
+          configMap:
+            name: grafana-dashboards

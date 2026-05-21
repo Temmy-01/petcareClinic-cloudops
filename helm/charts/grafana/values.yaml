@@ -1,9 +1,11 @@
 replicaCount: 1
 
 image:
-  repository: "spring-petclinic-grafana"
-  tag: ""
+  repository: "grafana/grafana"
+  tag: "11.3.0"
   pullPolicy: IfNotPresent
+
+adminPassword: "petclinic"
 
 service:
   type: ClusterIP

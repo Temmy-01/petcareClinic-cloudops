@@ -24,14 +24,9 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end }}
 
 {{- define "grafana.image" -}}
-{{- $registry := .Values.global.imageRegistry | default "" }}
-{{- $repo := .Values.image.repository | default "spring-petclinic-grafana" }}
-{{- $tag := .Values.image.tag | default .Values.global.imageTag | default "latest" }}
-{{- if $registry }}
-{{- printf "%s/%s:%s" $registry $repo $tag }}
-{{- else }}
+{{- $repo := .Values.image.repository | default "grafana/grafana" }}
+{{- $tag := .Values.image.tag | default "11.3.0" }}
 {{- printf "%s:%s" $repo $tag }}
-{{- end }}
 {{- end }}
 
 {{- define "petclinic.initContainers.waitForConfig" -}}

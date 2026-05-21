@@ -127,11 +127,8 @@ genai-service:
   service:
     type: ClusterIP
     port: 8084
-  # API keys — supply at install time via --set, never commit real values here
-  genaiSecret:
-    openaiApiKey: ""
-    azureOpenaiKey: ""
-    azureOpenaiEndpoint: ""
+  # genai-secret is managed out-of-band via `kubectl create secret generic genai-secret`.
+  # Required keys: AZURE_OPENAI_KEY, AZURE_OPENAI_ENDPOINT
   resources:
     limits:
       memory: 512Mi
@@ -179,8 +176,8 @@ zipkin:
 prometheus:
   replicaCount: 1
   image:
-    repository: "spring-petclinic-prometheus"
-    tag: ""
+    repository: "prom/prometheus"
+    tag: "v2.53.0"
     pullPolicy: IfNotPresent
   service:
     type: ClusterIP
@@ -196,9 +193,10 @@ prometheus:
 grafana:
   replicaCount: 1
   image:
-    repository: "spring-petclinic-grafana"
-    tag: ""
+    repository: "grafana/grafana"
+    tag: "11.3.0"
     pullPolicy: IfNotPresent
+  adminPassword: "petclinic"
   service:
     type: ClusterIP
     port: 3000

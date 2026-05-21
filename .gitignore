@@ -1,0 +1,7 @@
+.terraform/
+helm/charts/*.tgz
+
+# Terraform state — real state lives in S3 backend
+*.tfstate
+*.tfstate.backup
+terraform.tfstate.d/

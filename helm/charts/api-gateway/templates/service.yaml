@@ -12,5 +12,9 @@ spec:
       targetPort: 8080
       protocol: TCP
       name: http
+    - port: 8090
+      targetPort: 8090
+      protocol: TCP
+      name: management
   selector:
     {{- include "api-gateway.selectorLabels" . | nindent 4 }}

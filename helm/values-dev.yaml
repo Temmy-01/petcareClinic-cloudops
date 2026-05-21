@@ -1,0 +1,57 @@
+global:
+  imageRegistry: "268015775379.dkr.ecr.us-east-1.amazonaws.com"
+  imageTag: "dev-29"
+  namespace: dev
+  springProfile: docker
+  configServerUrl: "http://config-server:8888"
+  eurekaDefaultZone: "http://discovery-server:8761/eureka/"
+config-server:
+  image:
+    repository: "petclinic/config-server"
+discovery-server:
+  image:
+    repository: "petclinic/discovery-server"
+admin-server:
+  image:
+    repository: "petclinic/admin-server"
+customers-service:
+  image:
+    repository: "petclinic/customers-service"
+vets-service:
+  image:
+    repository: "petclinic/vets-service"
+visits-service:
+  image:
+    repository: "petclinic/visits-service"
+api-gateway:
+  image:
+    repository: "petclinic/api-gateway"
+  service:
+    type: LoadBalancer
+    port: 80
+genai-service:
+  replicaCount: 1
+  image:
+    repository: "petclinic/genai-service"
+    tag: ""
+    pullPolicy: IfNotPresent
+  service:
+    type: ClusterIP
+    port: 8084
+  env:
+    - name: SPRING_AI_AZURE_OPENAI_ENDPOINT
+      valueFrom:
+        secretKeyRef:
+          name: genai-secret
+          key: AZURE_OPENAI_ENDPOINT
+    - name: SPRING_AI_AZURE_OPENAI_API_KEY
+      valueFrom:
+        secretKeyRef:
+          name: genai-secret
+          key: AZURE_OPENAI_KEY
+    - name: SPRING_AI_AZURE_OPENAI_CHAT_OPTIONS_DEPLOYMENT_NAME
+      value: "gpt-4.1-mini"
+prometheus:
+  replicaCount: 1
+grafana:
+  replicaCount: 1

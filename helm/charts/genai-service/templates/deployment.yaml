@@ -36,6 +36,9 @@ spec:
               value: {{ .Values.global.configServerUrl | default "http://config-server:8888" | quote }}
             - name: EUREKA_CLIENT_SERVICEURL_DEFAULTZONE
               value: {{ .Values.global.eurekaDefaultZone | default "http://discovery-server:8761/eureka/" | quote }}
+            {{- with .Values.env }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
           readinessProbe:
             httpGet:
               path: /actuator/health

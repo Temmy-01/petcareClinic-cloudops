@@ -1,0 +1,46 @@
+global:
+  imageRegistry: "268015775379.dkr.ecr.us-east-1.amazonaws.com"
+  imageTag: "v1.0.0"
+  namespace: production
+  springProfile: docker
+  configServerUrl: "http://config-server:8888"
+  eurekaDefaultZone: "http://discovery-server:8761/eureka/"
+
+api-gateway:
+  service:
+    type: LoadBalancer
+  replicaCount: 2
+
+genai-service:
+  replicaCount: 1
+  genaiSecret:
+    openaiApiKey: "CHANGE_ME"
+    azureOpenaiKey: ""
+    azureOpenaiEndpoint: ""
+
+config-server:
+  replicaCount: 2
+
+discovery-server:
+  replicaCount: 2
+
+customers-service:
+  replicaCount: 2
+
+vets-service:
+  replicaCount: 2
+
+visits-service:
+  replicaCount: 2
+
+admin-server:
+  replicaCount: 1
+
+zipkin:
+  replicaCount: 1
+
+prometheus:
+  replicaCount: 1
+
+grafana:
+  replicaCount: 1

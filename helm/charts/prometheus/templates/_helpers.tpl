@@ -24,14 +24,9 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end }}
 
 {{- define "prometheus.image" -}}
-{{- $registry := .Values.global.imageRegistry | default "" }}
-{{- $repo := .Values.image.repository | default "spring-petclinic-prometheus" }}
-{{- $tag := .Values.image.tag | default .Values.global.imageTag | default "latest" }}
-{{- if $registry }}
-{{- printf "%s/%s:%s" $registry $repo $tag }}
-{{- else }}
+{{- $repo := .Values.image.repository | default "prom/prometheus" }}
+{{- $tag := .Values.image.tag | default "v2.53.0" }}
 {{- printf "%s:%s" $repo $tag }}
-{{- end }}
 {{- end }}
 
 {{- define "petclinic.initContainers.waitForConfig" -}}

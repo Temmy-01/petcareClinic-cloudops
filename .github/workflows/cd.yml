@@ -1,0 +1,201 @@
+name: CD / Build Push and Update Manifests
+
+on:
+  push:
+    branches: [ Dev, main ]
+    paths-ignore:
+      - 'helm/values-dev.yaml'
+      - 'helm/values-production.yaml'
+
+concurrency:
+  group: cd-${{ github.ref_name }}
+  cancel-in-progress: false
+
+env:
+  AWS_REGION: ${{ secrets.AWS_REGION }}
+  ECR_REGISTRY: ${{ secrets.ECR_REGISTRY }}
+
+jobs:
+
+  build-and-push:
+    name: Build and Push to ECR
+    runs-on: ubuntu-latest
+
+    outputs:
+      image_tag: ${{ steps.set-tag.outputs.image_tag }}
+      namespace: ${{ steps.set-tag.outputs.namespace }}
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Java 17
+      uses: actions/setup-java@v4
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+        cache: maven
+
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ secrets.AWS_REGION }}
+
+    - name: Log in to Amazon ECR
+      uses: aws-actions/amazon-ecr-login@v2
+
+    - name: Set image tag and namespace based on branch
+      id: set-tag
+      run: |
+        if [ "${{ github.ref_name }}" = "main" ]; then
+          echo "image_tag=v1.0.${{ github.run_number }}" >> $GITHUB_OUTPUT
+          echo "namespace=production" >> $GITHUB_OUTPUT
+        else
+          echo "image_tag=dev-${{ github.run_number }}" >> $GITHUB_OUTPUT
+          echo "namespace=dev" >> $GITHUB_OUTPUT
+        fi
+
+    - name: Fix mvnw line endings and permissions
+      run: |
+        sed -i 's/\r$//' upstream/mvnw
+        chmod +x upstream/mvnw
+
+    - name: Build Docker images with Maven
+      run: |
+        cd upstream
+        ./mvnw clean install -P buildDocker \
+          -Ddocker.image.prefix=${{ secrets.ECR_REGISTRY }}/petclinic \
+          -Dmaven.test.skip=true
+
+    - name: Tag and push all images to ECR
+      run: |
+        IMAGE_TAG=${{ steps.set-tag.outputs.image_tag }}
+        for svc in config-server discovery-server customers-service vets-service \
+                   visits-service genai-service api-gateway admin-server; do
+          SRC=${{ secrets.ECR_REGISTRY }}/petclinic/spring-petclinic-${svc}:latest
+          DST=${{ secrets.ECR_REGISTRY }}/petclinic/${svc}:${IMAGE_TAG}
+          docker tag  "$SRC" "$DST"
+          docker push "$DST"
+          echo "Pushed: petclinic/${svc}:${IMAGE_TAG}"
+        done
+
+  apply-genai-secret:
+    name: Apply genai-secret to EKS
+    runs-on: ubuntu-latest
+    needs: build-and-push
+
+    env:
+      NAMESPACE: ${{ needs.build-and-push.outputs.namespace }}
+
+    steps:
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ secrets.AWS_REGION }}
+
+    - name: Update kubeconfig for EKS
+      run: |
+        aws eks update-kubeconfig \
+          --name "${{ secrets.EKS_CLUSTER_NAME }}" \
+          --region "${{ secrets.AWS_REGION }}"
+
+    - name: Apply genai-secret (idempotent)
+      env:
+        AZURE_OPENAI_KEY: ${{ secrets.AZURE_OPENAI_KEY }}
+        AZURE_OPENAI_ENDPOINT: ${{ secrets.AZURE_OPENAI_ENDPOINT }}
+      run: |
+        if [ -z "$AZURE_OPENAI_KEY" ] || [ -z "$AZURE_OPENAI_ENDPOINT" ]; then
+          echo "ERROR: AZURE_OPENAI_KEY or AZURE_OPENAI_ENDPOINT is not set in GitHub Secrets."
+          exit 1
+        fi
+
+        kubectl create namespace "$NAMESPACE" --dry-run=client -o yaml | kubectl apply -f -
+
+        kubectl create secret generic genai-secret \
+          --namespace "$NAMESPACE" \
+          --from-literal=AZURE_OPENAI_KEY="$AZURE_OPENAI_KEY" \
+          --from-literal=AZURE_OPENAI_ENDPOINT="$AZURE_OPENAI_ENDPOINT" \
+          --dry-run=client -o yaml | kubectl apply -f -
+
+        echo "genai-secret applied to namespace $NAMESPACE"
+
+    - name: Roll genai-service to pick up secret changes
+      run: |
+        if kubectl get deployment genai-service -n "$NAMESPACE" >/dev/null 2>&1; then
+          kubectl rollout restart deployment/genai-service -n "$NAMESPACE"
+          echo "Triggered rollout restart of genai-service in $NAMESPACE"
+        else
+          echo "genai-service deployment not found in $NAMESPACE (likely first-time bootstrap) — skipping restart"
+        fi
+
+  update-manifests:
+    name: Update Helm values for ArgoCD
+    runs-on: ubuntu-latest
+    needs: build-and-push
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        token: ${{ secrets.GH_PAT }}
+
+    - name: Set variables
+      run: |
+        echo "IMAGE_TAG=${{ needs.build-and-push.outputs.image_tag }}" >> $GITHUB_ENV
+        echo "NAMESPACE=${{ needs.build-and-push.outputs.namespace }}" >> $GITHUB_ENV
+
+    - name: Install yq
+      run: |
+        sudo wget -qO /usr/local/bin/yq \
+          https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64
+        sudo chmod +x /usr/local/bin/yq
+
+    - name: Update global.imageTag in Helm values
+      env:
+        IMAGE_TAG: ${{ needs.build-and-push.outputs.image_tag }}
+        NAMESPACE: ${{ needs.build-and-push.outputs.namespace }}
+      run: |
+        VALUES_FILE="helm/values-${NAMESPACE}.yaml"
+        if [ ! -f "$VALUES_FILE" ]; then
+          echo "ERROR: $VALUES_FILE not found"
+          exit 1
+        fi
+        yq -i '.global.imageTag = strenv(IMAGE_TAG)' "$VALUES_FILE"
+        echo "Updated $VALUES_FILE → global.imageTag: $IMAGE_TAG"
+
+    - name: Verify changes
+      run: git diff helm/
+
+    - name: Commit and push updated values
+      env:
+        IMAGE_TAG: ${{ needs.build-and-push.outputs.image_tag }}
+        NAMESPACE: ${{ needs.build-and-push.outputs.namespace }}
+      run: |
+        git config user.name  "github-actions[bot]"
+        git config user.email "github-actions[bot]@users.noreply.github.com"
+
+        if git diff --quiet helm/; then
+          echo "No changes in helm/ — nothing to commit."
+          exit 0
+        fi
+
+        git add "helm/values-${NAMESPACE}.yaml"
+        git commit -m "chore(cd): bump ${NAMESPACE} imageTag to ${IMAGE_TAG}"
+
+        # Rebase onto latest remote and push, with a small retry to survive races
+        for attempt in 1 2 3; do
+          if git pull --rebase origin "${{ github.ref_name }}" && git push origin "HEAD:${{ github.ref_name }}"; then
+            echo "Push succeeded on attempt ${attempt}."
+            exit 0
+          fi
+          echo "Attempt ${attempt} failed, retrying..."
+          sleep 3
+        done
+        echo "All push attempts failed."
+        exit 1
+
+        
