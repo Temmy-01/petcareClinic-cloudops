@@ -8,6 +8,7 @@ image:
 service:
   type: ClusterIP
   port: 8080
+  acmCertificateArn: ""   # set in values-production.yaml to enable HTTPS
 
 ingress:
   enabled: true

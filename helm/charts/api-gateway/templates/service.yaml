@@ -5,6 +5,13 @@ metadata:
   namespace: {{ .Values.global.namespace | default "petclinic" }}
   labels:
     {{- include "api-gateway.labels" . | nindent 4 }}
+  {{- if .Values.service.acmCertificateArn }}
+  annotations:
+    service.beta.kubernetes.io/aws-load-balancer-ssl-cert: {{ .Values.service.acmCertificateArn | quote }}
+    service.beta.kubernetes.io/aws-load-balancer-ssl-ports: "443"
+    service.beta.kubernetes.io/aws-load-balancer-backend-protocol: http
+    service.beta.kubernetes.io/aws-load-balancer-ssl-negotiation-policy: ELBSecurityPolicy-TLS13-1-2-2021-06
+  {{- end }}
 spec:
   type: {{ .Values.service.type }}
   ports:
@@ -12,6 +19,12 @@ spec:
       targetPort: 8080
       protocol: TCP
       name: http
+    {{- if .Values.service.acmCertificateArn }}
+    - port: 443
+      targetPort: 8080
+      protocol: TCP
+      name: https
+    {{- end }}
     - port: 8090
       targetPort: 8090
       protocol: TCP

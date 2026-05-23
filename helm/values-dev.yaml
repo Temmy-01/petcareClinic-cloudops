@@ -1,6 +1,6 @@
 global:
   imageRegistry: "268015775379.dkr.ecr.us-east-1.amazonaws.com"
-  imageTag: "dev-33"
+  imageTag: "dev-36"
   namespace: dev
   springProfile: docker
   configServerUrl: "http://config-server:8888"
@@ -29,6 +29,7 @@ api-gateway:
   service:
     type: LoadBalancer
     port: 80
+    acmCertificateArn: "arn:aws:acm:us-east-1:268015775379:certificate/0b3c1b3a-df26-4c95-b4fb-d85f613fc4e5"
 genai-service:
   replicaCount: 1
   image:

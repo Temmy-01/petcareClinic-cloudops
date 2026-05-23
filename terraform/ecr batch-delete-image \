@@ -1,0 +1,32 @@
+{
+    "imageIds": [
+        {
+            "imageDigest": "sha256:01e81f2d6f65ec4a2a1ca64a0ba04b627bdcac6d30e0cd2e1954de7346bdc86e",
+            "imageTag": "dev-22"
+        },
+        {
+            "imageDigest": "sha256:ad5bbd758f789acc2228925b81ec100b2d86fb1b8533d85f181b9376ade3a2c7",
+            "imageTag": "dev-20"
+        },
+        {
+            "imageDigest": "sha256:a1da1cdb2b70164b5119b55b96cba5209a91aa69cba2cdf95fac90740b892123",
+            "imageTag": "dev-18"
+        },
+        {
+            "imageDigest": "sha256:19ac757aaf932cc04a863d9510da54f847a14d7af7297861132abc9c2bd74ee8",
+            "imageTag": "dev-23"
+        },
+        {
+            "imageDigest": "sha256:74dc8c7070d26e11890c6a8cae0bb5c20336c799c18801d4e70a5e821caabec2",
+            "imageTag": "dev-19"
+        },
+        {
+            "imageDigest": "sha256:f1774be30f3cd89d22bffbaf44d41e57f426f611db9aac3462e59552d0efb9aa",
+            "imageTag": "dev-17"
+        },
+        {
+            "imageDigest": "sha256:66bda978ca4ba5c9ecede549d47352d2a8081a89a47cd51edc71f2af05e9fb06",
+            "imageTag": "dev-21"
+        }
+    ]
+}
