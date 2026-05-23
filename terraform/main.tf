@@ -213,6 +213,24 @@ resource "aws_eks_node_group" "main" {
 }
 
 # -----------------------------------------------------------------------
+# ACM — TLS Certificate (validated via DNS, validated in Azure DNS)
+# -----------------------------------------------------------------------
+resource "aws_acm_certificate" "main" {
+  domain_name               = var.domain_name
+  subject_alternative_names = ["*.${var.domain_name}"]
+  validation_method         = "DNS"
+
+  lifecycle {
+    create_before_destroy = true
+  }
+
+  tags = {
+    Name        = "petclinic-cert"
+    environment = var.environment
+  }
+}
+
+# -----------------------------------------------------------------------
 # RDS MYSQL
 # -----------------------------------------------------------------------
 resource "aws_db_subnet_group" "main" {
