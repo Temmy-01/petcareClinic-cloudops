@@ -10,7 +10,6 @@ metadata:
     service.beta.kubernetes.io/aws-load-balancer-ssl-cert: {{ .Values.service.acmCertificateArn | quote }}
     service.beta.kubernetes.io/aws-load-balancer-ssl-ports: "443"
     service.beta.kubernetes.io/aws-load-balancer-backend-protocol: http
-    service.beta.kubernetes.io/aws-load-balancer-ssl-negotiation-policy: ELBSecurityPolicy-TLS13-1-2-2021-06
   {{- end }}
 spec:
   type: {{ .Values.service.type }}
